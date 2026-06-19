@@ -4,6 +4,26 @@ All notable changes to `colony-memory-hermes` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] — 2026-06-19
+
+Bug fixes found by loading the plugin in a real Hermes runtime — the tools
+weren't actually reaching the agent before this.
+
+### Fixed
+- **Tools now register with Hermes.** `register()` returned a
+  `PluginRegistration`, but Hermes' contract is `register(ctx)` →
+  `ctx.register_tool(name, toolset, schema, handler, …)`; the return value is
+  ignored, so no tools were ever added to the agent's registry. `register()`
+  now calls `ctx.register_tool` for each tool (and still returns the record for
+  introspection/tests).
+- **`hermes plugins install <owner/repo>` (directory clone) now works.** Hermes
+  imports the plugin directory's own `__init__.py`; the package nested its code
+  under `colony_memory_hermes/`. Added a root `__init__.py` shim that puts the
+  clone on `sys.path` and re-exports `register` (excluded from the wheel; the
+  pip/entry-point path is unaffected).
+- Bumped the `colony-memory` runtime dependency to `>=0.1.1` (live-vault fixes:
+  first-backup quota guard + snapshot listing).
+
 ## [0.1.0] — 2026-06-19
 
 Initial release.

@@ -64,14 +64,15 @@ def _ensure_colony_memory_importable() -> None:
         )
 
 
-def register(harness: object) -> object:
-    """Hermes plugin entry point — see :func:`colony_memory_hermes._register.register_plugin`.
+def register(ctx: object) -> object:
+    """Hermes plugin entry point — Hermes calls this with a ``PluginContext``.
 
     Ensures the ``colony-memory`` runtime is importable first (the git-clone
-    shim path), then builds the plugin's tool registration.
+    shim path), then registers the plugin's tools via ``ctx.register_tool``
+    (see :func:`colony_memory_hermes._register.register_plugin`).
     """
     _ensure_colony_memory_importable()
-    return register_plugin(harness)
+    return register_plugin(ctx)
 
 
 __all__ = ["__version__", "register"]

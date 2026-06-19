@@ -40,11 +40,64 @@ def test_every_tool_is_well_formed() -> None:
 
 
 def test_register_returns_registration() -> None:
-    reg = register(harness=object())
+    reg = register(object())
     assert isinstance(reg, PluginRegistration)
     assert reg.name == "colony_memory"
     assert reg.tool_prefix == "colony_memory_"
     assert [t.name for t in reg.tools] == [t.name for t in build_all()]
+
+
+class _FakeCtx:
+    """Stand-in for Hermes' PluginContext.register_tool contract."""
+
+    def __init__(self) -> None:
+        self.registered: list[dict] = []
+
+    def register_tool(self, **kwargs) -> None:
+        self.registered.append(kwargs)
+
+
+def test_register_calls_ctx_register_tool() -> None:
+    # When given a real PluginContext (has register_tool), every tool is
+    # registered with the Hermes contract: name, toolset, schema, handler.
+    ctx = _FakeCtx()
+    register(ctx)
+    names = [r["name"] for r in ctx.registered]
+    assert names == [t.name for t in build_all()]
+    for r in ctx.registered:
+        assert r["toolset"] == "colony_memory"
+        # schema is the full OpenAI function object: args live under "parameters"
+        assert r["schema"]["parameters"]["type"] == "object"
+        assert r["schema"]["description"]
+        assert r["schema"]["name"] == r["name"]
+        assert callable(r["handler"])
+        assert r["description"]
+        assert r["is_async"] is False
+
+
+def test_ctx_handler_unpacks_args_and_returns_json(monkeypatch) -> None:
+    # The handler Hermes invokes is handler(args: dict, **kwargs) -> str:
+    # it unpacks the model's args into the tool and JSON-encodes the result.
+    import json
+
+    from colony_memory_hermes.tools import _common
+
+    class _Mem:
+        def status(self):
+            return {"quota_bytes": 10, "used_bytes": 1, "available_bytes": 9, "file_count": 1}
+
+    monkeypatch.setattr(_common, "build_memory", _Mem)
+    ctx = _FakeCtx()
+    register(ctx)
+    status_handler = next(
+        r["handler"] for r in ctx.registered if r["name"] == "colony_memory_status"
+    )
+    out = status_handler({})  # Hermes passes the args dict positionally
+    assert isinstance(out, str)
+    assert json.loads(out)["quota_bytes"] == 10
+    # extra framework kwargs are ignored
+    with_kwargs = status_handler({}, parent_agent=object(), session_id="x")
+    assert json.loads(with_kwargs)["file_count"] == 1
 
 
 def test_backup_required_field() -> None:

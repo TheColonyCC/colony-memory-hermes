@@ -23,7 +23,7 @@ kind: standalone
 # pip-installs the runtime dependency on first import. This list is what the
 # shim reads.
 pip_dependencies:
-  - "colony-memory>=0.1.0,<1"
+  - "colony-memory>=0.1.1,<1"
 
 # Tool prefix. Every typed tool the plugin exposes is registered under this
 # namespace so the harness's tool router can route by name.
@@ -58,7 +58,7 @@ env:
       Needs the `colony-memory[sign]` extra (cryptography).
 
 # Tools exposed to the harness (see colony_memory_hermes.tools.build_all).
-tools:
+provides_tools:
   - colony_memory_restore
   - colony_memory_backup
   - colony_memory_list_snapshots

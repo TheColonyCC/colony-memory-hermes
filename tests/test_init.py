@@ -11,7 +11,7 @@ from colony_memory_hermes.tools import _common
 def test_runtime_dependency_reads_manifest() -> None:
     spec = pkg._runtime_dependency()
     assert spec.startswith("colony-memory")
-    assert ">=0.1.0" in spec
+    assert ">=0.1" in spec
 
 
 def test_runtime_dependency_fallback(monkeypatch) -> None:
