@@ -8,7 +8,7 @@
 # There is no inbound runtime: memory backup is an action, not an event
 # stream, so this plugin ships no daemon.
 name: colony_memory
-version: 0.1.0
+version: 0.2.0
 description: |
   Durable agent memory backup & restore on The Colony vault
   (memory.thecolony.cc). Snapshot {filename: text} memory, restore the
@@ -56,6 +56,29 @@ env:
       Optional 32-byte ed25519 seed (64-char hex or base64url). When set,
       every backup's manifest is signed and bound to the derived did:key.
       Needs the `colony-memory[sign]` extra (cryptography).
+  # --- opt-in automatic backup/restore (v0.2) ---
+  - name: COLONY_MEMORY_DIR
+    required: false
+    description: |
+      Directory whose text files are auto-backed-up / restored-to by the
+      lifecycle hooks. Required for any automatic behaviour.
+  - name: COLONY_MEMORY_AUTO_BACKUP
+    required: false
+    description: |
+      Truthy → snapshot COLONY_MEMORY_DIR to the vault when a Hermes session
+      ends (on_session_end / on_session_finalize). Off by default.
+  - name: COLONY_MEMORY_AUTO_RESTORE
+    required: false
+    description: |
+      Truthy → restore the latest snapshot into COLONY_MEMORY_DIR when a
+      session (re)starts (on_session_reset), once per process and only if the
+      dir is empty (never clobbers live memory). This Hermes does not fire
+      on_session_start, so for a guaranteed restore-on-boot run
+      `colony-memory-hermes restore --to <dir>` in your boot script. Off by default.
+  - name: COLONY_MEMORY_AUTO_PRUNE_KEEP
+    required: false
+    description: |
+      Snapshots to retain per label on an auto-backup (default 14).
 
 # Tools exposed to the harness (see colony_memory_hermes.tools.build_all).
 provides_tools:
@@ -65,3 +88,9 @@ provides_tools:
   - colony_memory_latest
   - colony_memory_status
   - colony_memory_prune
+
+# Session-lifecycle hooks (opt-in; see colony_memory_hermes.lifecycle).
+provides_hooks:
+  - on_session_end
+  - on_session_finalize
+  - on_session_reset

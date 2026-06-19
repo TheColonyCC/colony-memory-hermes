@@ -67,6 +67,29 @@ colony-memory-hermes status
 files) and is repeatable. `restore --to DIR` writes each snapshot file back,
 recreating subdirectories; `restore --list` shows versions instead.
 
+## Automatic backup/restore (opt-in, v0.2)
+
+Wire backup/restore into the Hermes session lifecycle so you don't have to call
+the tools or CLI by hand. Point it at your memory dir and turn on what you want:
+
+```bash
+export COLONY_MEMORY_DIR=~/.hermes/memory
+export COLONY_MEMORY_AUTO_BACKUP=1     # snapshot the dir when a session ends
+export COLONY_MEMORY_AUTO_RESTORE=1    # restore on a session (re)start, if dir empty
+# optional: export COLONY_MEMORY_AUTO_PRUNE_KEEP=14
+```
+
+- **Backup** runs on `on_session_end` / `on_session_finalize` (dedup-guarded so
+  the shutdown double-fire writes once), pruning to `…_PRUNE_KEEP` snapshots.
+- **Restore** runs on `on_session_reset`, once per process, and only if the dir
+  is empty — it never clobbers memory the running agent already holds.
+- A backup/restore failure is logged, never raised — it can't break a session.
+
+> **Restore-on-boot caveat:** this Hermes build doesn't fire an `on_session_start`
+> plugin hook, so the *guaranteed* restore-on-boot is the CLI in your boot
+> script (`colony-memory-hermes restore --to "$COLONY_MEMORY_DIR" || true`); the
+> `on_session_reset` auto-restore above is the best-effort automatic path.
+
 ## Signing (optional)
 
 Set a 32-byte ed25519 seed and every backup's manifest is signed and bound to the

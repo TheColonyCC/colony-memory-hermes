@@ -20,7 +20,53 @@ SIGNING_SEED_ENV_VAR = "COLONY_MEMORY_SIGNING_SEED"
 
 DEFAULT_LABEL = "default"
 
+# ---- automatic lifecycle (opt-in) --------------------------------------------
+#: Directory whose text files are auto-backed-up / restored-to by the lifecycle
+#: hooks. Required for any auto behaviour.
+DIR_ENV_VAR = "COLONY_MEMORY_DIR"
+#: Truthy → back up COLONY_MEMORY_DIR when a Hermes session ends.
+AUTO_BACKUP_ENV_VAR = "COLONY_MEMORY_AUTO_BACKUP"
+#: Truthy → restore the latest snapshot into COLONY_MEMORY_DIR when a session
+#: (re)starts, but only if the dir is empty (never clobbers live memory).
+AUTO_RESTORE_ENV_VAR = "COLONY_MEMORY_AUTO_RESTORE"
+#: Snapshots to retain per label on an auto-backup (bounds the 10 MB tier).
+PRUNE_KEEP_ENV_VAR = "COLONY_MEMORY_AUTO_PRUNE_KEEP"
+DEFAULT_AUTO_PRUNE_KEEP = 14
+
+#: Extensions treated as restorable text when walking a directory.
+TEXT_SUFFIXES = frozenset({
+    ".md", ".txt", ".json", ".yaml", ".yml", ".toml", ".xml", ".csv",
+    ".cfg", ".ini", ".html",
+})
+
 JsonSchema = dict[str, Any]
+
+
+def truthy(value: str | None) -> bool:
+    """Parse env-var truthiness with broad tolerance."""
+    return bool(value) and value.strip().lower() not in ("", "0", "false", "no", "off")
+
+
+def memory_dir() -> str | None:
+    return os.environ.get(DIR_ENV_VAR) or None
+
+
+def auto_backup_enabled() -> bool:
+    return truthy(os.environ.get(AUTO_BACKUP_ENV_VAR))
+
+
+def auto_restore_enabled() -> bool:
+    return truthy(os.environ.get(AUTO_RESTORE_ENV_VAR))
+
+
+def auto_prune_keep() -> int:
+    raw = os.environ.get(PRUNE_KEEP_ENV_VAR)
+    if raw:
+        try:
+            return max(1, int(raw))
+        except ValueError:
+            pass
+    return DEFAULT_AUTO_PRUNE_KEEP
 
 
 @dataclass

@@ -67,3 +67,12 @@ def test_signer_bad_length(monkeypatch) -> None:
 def test_no_signer_when_unset(monkeypatch) -> None:
     monkeypatch.delenv(_common.SIGNING_SEED_ENV_VAR, raising=False)
     assert _common._build_signer() is None
+
+
+def test_auto_prune_keep_default_and_bad_value(monkeypatch):
+    monkeypatch.delenv(_common.PRUNE_KEEP_ENV_VAR, raising=False)
+    assert _common.auto_prune_keep() == _common.DEFAULT_AUTO_PRUNE_KEEP
+    monkeypatch.setenv(_common.PRUNE_KEEP_ENV_VAR, "not-an-int")
+    assert _common.auto_prune_keep() == _common.DEFAULT_AUTO_PRUNE_KEEP
+    monkeypatch.setenv(_common.PRUNE_KEEP_ENV_VAR, "5")
+    assert _common.auto_prune_keep() == 5

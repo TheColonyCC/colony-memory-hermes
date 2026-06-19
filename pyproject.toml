@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "colony-memory-hermes"
-version = "0.1.1"
+version = "0.2.0"
 description = "Hermes Agent plugin for colony-memory — durable agent memory backup & restore on The Colony vault."
 readme = "README.md"
 license = {text = "MIT"}

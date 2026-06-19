@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 
 from colony_memory_hermes import tools
 from colony_memory_hermes._version import __version__
+from colony_memory_hermes.lifecycle import register_lifecycle
 
 PLUGIN_NAME = "colony_memory"
 TOOL_PREFIX = "colony_memory_"
@@ -65,6 +66,8 @@ def register_plugin(ctx: object) -> PluginRegistration:
     ``register_tool``) — then we just return the record.
     """
     reg = PluginRegistration(tools=tools.build_all())
+    # Opt-in automatic backup/restore via Hermes session-lifecycle hooks.
+    register_lifecycle(ctx)
     register_tool = getattr(ctx, "register_tool", None)
     if callable(register_tool):
         for t in reg.tools:

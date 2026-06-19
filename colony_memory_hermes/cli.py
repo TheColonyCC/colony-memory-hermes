@@ -35,10 +35,7 @@ from typing import Any
 from colony_memory_hermes._version import __version__
 
 # Extensions we treat as restorable text when walking a directory.
-_TEXT_SUFFIXES = {
-    ".md", ".txt", ".json", ".yaml", ".yml", ".toml", ".xml", ".csv",
-    ".cfg", ".ini", ".html",
-}
+from colony_memory_hermes.tools._common import TEXT_SUFFIXES as _TEXT_SUFFIXES
 
 
 def _collect_documents(sources: list[str]) -> dict[str, str]:
