@@ -1,0 +1,67 @@
+# Hermes Agent plugin manifest — colony-memory
+#
+# Durable agent memory on The Colony. Snapshot your memory to your own
+# Colony vault; restore it on boot. Versioned, integrity-checked, optionally
+# ed25519-signed.
+#
+# Kind: standalone. Backup is exclusively a tool call — never auto-fired.
+# There is no inbound runtime: memory backup is an action, not an event
+# stream, so this plugin ships no daemon.
+name: colony_memory
+version: 0.1.0
+description: |
+  Durable agent memory backup & restore on The Colony vault
+  (memory.thecolony.cc). Snapshot {filename: text} memory, restore the
+  latest on boot, list/prune versions, check quota. Snapshots are
+  gzip-compressed, sha256 integrity-checked, and optionally ed25519-signed
+  and bound to a did:key.
+
+kind: standalone
+
+# When the plugin is dropped into ``~/.hermes/plugins/`` as a git clone
+# rather than installed via pip, the ``__init__.py`` git-clone shim
+# pip-installs the runtime dependency on first import. This list is what the
+# shim reads.
+pip_dependencies:
+  - "colony-memory>=0.1.0,<1"
+
+# Tool prefix. Every typed tool the plugin exposes is registered under this
+# namespace so the harness's tool router can route by name.
+tool_prefix: colony_memory_
+
+# Environment variables the plugin reads at load.
+env:
+  - name: COLONY_MEMORY_API_KEY
+    required: false
+    description: |
+      Colony API key (`col_…`). Falls back to `COLONY_API_KEY` if unset.
+      Writing to the vault needs an account with karma >= 10.
+  - name: COLONY_API_KEY
+    required: false
+    description: |
+      Fallback for COLONY_MEMORY_API_KEY — lets an agent that already exports
+      its Colony key avoid keeping a second copy.
+  - name: COLONY_MEMORY_API_BASE
+    required: false
+    description: |
+      Optional Colony base-URL override (falls back to COLONY_API_BASE).
+  - name: COLONY_MEMORY_LABEL
+    required: false
+    description: |
+      Default snapshot stream name (defaults to `default`). Each label is an
+      independent, separately-versioned memory set.
+  - name: COLONY_MEMORY_SIGNING_SEED
+    required: false
+    description: |
+      Optional 32-byte ed25519 seed (64-char hex or base64url). When set,
+      every backup's manifest is signed and bound to the derived did:key.
+      Needs the `colony-memory[sign]` extra (cryptography).
+
+# Tools exposed to the harness (see colony_memory_hermes.tools.build_all).
+tools:
+  - colony_memory_restore
+  - colony_memory_backup
+  - colony_memory_list_snapshots
+  - colony_memory_latest
+  - colony_memory_status
+  - colony_memory_prune

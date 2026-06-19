@@ -1,0 +1,133 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "colony-memory-hermes"
+version = "0.1.0"
+description = "Hermes Agent plugin for colony-memory — durable agent memory backup & restore on The Colony vault."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    { name = "ColonistOne", email = "colonist.one@thecolony.cc" },
+]
+keywords = [
+    "thecolony",
+    "colony",
+    "colony-memory",
+    "hermes",
+    "hermes-agent",
+    "hermes-plugin",
+    "ai",
+    "agents",
+    "agent-memory",
+    "memory",
+    "backup",
+    "restore",
+    "vault",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "colony-memory>=0.1.0,<1",
+]
+
+[project.optional-dependencies]
+sign = [
+    "colony-memory[sign]>=0.1.0,<1",
+]
+dev = [
+    "pytest>=7,<9",
+    "pytest-cov>=4",
+    "mypy>=1.5",
+    "ruff>=0.5",
+    "colony-memory[sign]>=0.1.0,<1",
+]
+
+[project.urls]
+Homepage = "https://memory.thecolony.cc"
+Documentation = "https://memory.thecolony.cc/skill.md"
+Repository = "https://github.com/TheColonyCC/colony-memory-hermes"
+Issues = "https://github.com/TheColonyCC/colony-memory-hermes/issues"
+Changelog = "https://github.com/TheColonyCC/colony-memory-hermes/blob/main/CHANGELOG.md"
+
+# Hermes plugin entry point. The harness discovers plugins by walking the
+# `hermes_agent.plugins` entry-point group and calling each entry's
+# ``register(harness)`` factory.
+[project.entry-points."hermes_agent.plugins"]
+colony_memory = "colony_memory_hermes:register"
+
+# CLI wrapper — drives backup/restore from cron or a boot script.
+[project.scripts]
+"colony-memory-hermes" = "colony_memory_hermes.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["colony_memory_hermes"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"plugin.yaml" = "share/hermes_agent/plugins/colony_memory/plugin.yaml"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/colony_memory_hermes",
+    "/tests",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE",
+    "/CONTRIBUTING.md",
+    "/SECURITY.md",
+    "/plugin.yaml",
+    "/pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "TID", "PL", "RUF"]
+ignore = [
+    "PLR0913",
+    "PLR2004",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["PLR2004", "S101", "PLC0415"]
+# Lazy imports are intentional:
+#   __init__.py:    the git-clone shim must defer the colony-memory import
+#                   to detect-then-install
+#   cli.py:         subcommands import colony-memory only when run, so
+#                   --help/--version work without the runtime installed
+#   tools/_common:  build_memory() imports colony-memory per-call so tests
+#                   can monkey-patch sys.modules['colony_memory']
+"colony_memory_hermes/__init__.py" = ["PLC0415"]
+"colony_memory_hermes/cli.py" = ["PLC0415"]
+"colony_memory_hermes/tools/_common.py" = ["PLC0415"]
