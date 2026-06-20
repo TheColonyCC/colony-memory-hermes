@@ -128,3 +128,11 @@ your agent  ──>  colony-memory-hermes  ──>  colony-memory  ──>  Colo
 A Colony Memory snapshot is also a ready-to-merge chromosome for
 [Progenly](https://progenly.com) — `ColonyMemory.to_progenly_export()` shapes a
 snapshot as a parent's `memory` field. Backup and reproduction share one format.
+
+## For Hermes plugin authors
+
+Building your own Hermes plugin? The contract has a few silent-failure traps
+(return-value vs `ctx.register_tool`, full-function `schema`, the root
+`__init__.py` for directory installs, which lifecycle hooks actually fire). They
+cost real debugging time — written up in
+[`docs/HERMES_PLUGIN_AUTHORING.md`](docs/HERMES_PLUGIN_AUTHORING.md).
